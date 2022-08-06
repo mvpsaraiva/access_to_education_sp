@@ -3,6 +3,8 @@
 # Then follow the manual to check and run the pipeline:
 #   https://books.ropensci.org/targets/walkthrough.html#inspect-the-pipeline # nolint
 
+# Package loading and overall setup ---------------------------------------
+
 # Load packages required to define the pipeline:
 library(targets)
 library(tarchetypes)
@@ -45,9 +47,15 @@ options(clustermq.scheduler = "multicore")
 lapply(list.files("R", full.names = TRUE, recursive = TRUE), source)
 # source("other_functions.R") # Source other scripts as needed. # nolint
 
+
+# Build targets -----------------------------------------------------------
+
+
 # Replace the target list below with your own:
 list(
   
+  ## Data processing targets ----------------------------------------------
+
   ## raw data files location
   tar_target(students_raw_file, "../data_raw/BID_RELACAO_ALUNOS_2022.csv", format = "file"),
   tar_target(students_geo_file, "../data_raw/BID_ALUNOS_COORDENADA_2022.csv", format = "file"),
@@ -79,7 +87,9 @@ list(
   tar_target(schools_geo, load_schools(schools_raw_file)),
   tar_target(rooms_geo, load_rooms(rooms_raw_file)),
   
-  ## Report 02
+
+  ## Report 02 targets ----------------------------------------------------
+
   ## figures section 1 - study area
   tar_target(figure_study_area, create_map_study_area(boundary_muni, topography), format = "file"),
   tar_target(figure_census_tracts, create_map_census_tracts(census_tracts, sp_bbox), format = "file"),
@@ -106,6 +116,9 @@ list(
   
   ## figures section 4 - flows
   tar_target(figure_distance_to_school, create_plot_distance_to_school(students_processed), format = "file")
+  
+  ## Report 03 targets ----------------------------------------------------
+  
 )
 
 
