@@ -28,3 +28,4 @@ vignettes/*.pdf
 .Renviron
 .DS_Store
 ._.DS_Store
+rosm.cache
