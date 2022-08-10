@@ -9,7 +9,11 @@
 library(targets)
 library(tarchetypes)
 
-# library(tarchetypes) # Load other packages as needed. # nolint
+# Load other packages as needed. # nolint
+
+# set r5r properties
+
+options(java.parameters = '-Xmx32G')
 
 # Load additional packages
 suppressPackageStartupMessages({
@@ -27,7 +31,7 @@ suppressPackageStartupMessages({
   library(viridis)
   library(ggsci)
   library(igraph)
-  library(edgebundle)
+  library(r5r)
 })
 
 # Set target options:
@@ -62,7 +66,8 @@ list(
   tar_target(students_socio_file, "../data_raw/BID_INFORMACOES_SOCIOECONOMICAS_2022.csv", format = "file"),
   tar_target(schools_raw_file, "../data_raw/BID_CADASTRO_ESCOLA_2022.csv", format = "file"),
   tar_target(rooms_raw_file, "../data_raw/BID_AMBIENTE_METRAGEM_2022.csv", format = "file"),
-  tar_target(dem_file, "../data/network/topografia3_spo.tif"),
+  tar_target(dem_file, "../network/topografia3_spo.tif"),
+  tar_target(r5_folder, "../network/"),
   
   ## geographical boundaries and topography
   tar_target(sp_centroid, c(-46.63306176720343, -23.548164364465265)),
@@ -73,10 +78,20 @@ list(
   tar_target(topography, read_topography(dem_file)),
   
   ## hexagonal grid (Uber H3 system)
-  tar_target(hexgrid_res_08, build_hex_grid(boundary_muni,  8)),
-  tar_target(hexgrid_res_09, build_hex_grid(boundary_muni,  9)),
   tar_target(hexgrid_res_10, build_hex_grid(boundary_muni, 10)),
-  
+  tar_target(hexgrid_res_09, build_hex_grid(boundary_muni,  9)),
+  tar_target(hexgrid_res_08, build_hex_grid(boundary_muni,  8)),
+
+  ## travel times
+  tar_target(travel_times_r10, compute_travel_times(r5_folder, hexgrid_res_10)),
+  # tar_target(travel_times_r09, compute_travel_times(r5_folder, hexgrid_res_09)),
+  # tar_target(travel_times_r08, compute_travel_times(r5_folder, hexgrid_res_08)),
+
+  ## unitary accessibility
+  tar_target(unitary_access_r10, calculate_unitary_access(travel_times_r10)),
+  # tar_target(unitary_access_r09, calculate_unitary_access(travel_times_r09)),
+  # tar_target(unitary_access_r08, calculate_unitary_access(travel_times_r08)),
+
   ## process students data  
   tar_target(students_raw, load_students_base_data(students_raw_file)),
   tar_target(students_socio, load_students_socio_data(students_raw, students_socio_file)),
@@ -115,10 +130,10 @@ list(
   tar_target(figure_schools_count, create_map_schools_count(schools_geo, boundary_muni, hexgrid_res_08)),
   
   ## figures section 4 - flows
-  tar_target(figure_distance_to_school, create_plot_distance_to_school(students_processed), format = "file")
+  tar_target(figure_distance_to_school, create_plot_distance_to_school(students_processed), format = "file"),
   
   ## Report 03 targets ----------------------------------------------------
-  
+  tar_target(figure_unitary_access, create_map_unitary_access(unitary_access_r10, hexgrid_res_10), format = "file")
 )
 
 
