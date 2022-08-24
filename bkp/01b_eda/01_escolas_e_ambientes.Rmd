@@ -1,0 +1,107 @@
+---
+title: "EDA Escolas e Ambientes"
+author: "M. Saraiva"
+date: '2022-07-01'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(data.table)
+library(sf)
+library(viridis)
+library(ggspatial)
+```
+
+## Análise Exploratória - Escolas e Ambientes
+
+
+## Carregar dados
+
+```{r cars}
+escolas_df <- read_rds("../../../data/escolas.rds")
+ambiente_df <- read_rds("../../../data/ambiente.rds")
+```
+
+## Escolas
+
+Dependência e rede.
+
+```{r}
+escolas_df %>%
+  count(NOMEDEP, REDE)
+```
+
+```{r}
+escolas_df %>%
+  count(NOMEDEP, wt=QT_ALUNOS)
+```
+
+```{r}
+escolas_df %>%
+  count(NM_UNIDADE_EDUCACAO, DISTR, SETOR)
+```
+
+
+```{r}
+escolas_sf <- sf::st_as_sf(escolas_df, coords = c("CD_COORDENADA_GEO_X", "CD_COORDENADA_GEO_Y"), crs = 4326)
+escolas_df$hex <- h3jsr::point_to_h3(escolas_sf, res = 8)
+
+hex_escolas_sf <- escolas_df %>% 
+  group_by(hex) %>%
+  summarise(escolas = n(), vagas = sum(QT_ALUNOS, na.rm = TRUE), area = sum(qt_area_total, na.rm = TRUE) ) 
+
+hex_escolas_sf$geometry <- h3jsr::h3_to_polygon(hex_escolas_sf$hex)
+hex_escolas_sf <- st_as_sf(hex_escolas_sf, crs = 4326)
+```
+
+```{r}
+hex_escolas_sf %>%
+  ggplot() +
+  annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+  geom_sf(aes(fill = escolas), color = NA) +
+  scale_fill_viridis() 
+```
+
+```{r}
+hex_escolas_sf %>%
+  ggplot() +
+  annotation_map_tile(type = "cartolight", zoom = 9, progress = "none") +
+  geom_sf(aes(fill = vagas), color = NA) +
+  scale_fill_viridis() 
+```
+
+  
+## Ambientes
+
+```{r}
+ambiente_df
+```
+
+```{r}
+ambiente_df %>% 
+  count(DC_TIPO_AMBIENTE, IN_PERMITE_SALA_AULA)
+```
+
+
+```{r}
+ambiente_df %>%
+  select(CD_ESCOLA, NR_SALA, QT_IDEAL_PESSOA, QT_REAL_PESSOA, DC_TIPO_AMBIENTE)
+```
+
+```{r}
+ambiente_df %>%
+  select(CD_ESCOLA, NR_SALA, QT_IDEAL_PESSOA, QT_REAL_PESSOA, DC_TIPO_AMBIENTE) %>%
+  mutate(espaco_livre = QT_IDEAL_PESSOA - QT_REAL_PESSOA) %>%
+  drop_na() %>%
+  ggplot(aes(espaco_livre)) +
+  geom_histogram(bins=30) +
+  scale_x_continuous(breaks = seq(-10, 40, 2))
+
+```
+
+
+
+
+

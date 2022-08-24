@@ -30,7 +30,7 @@ suppressPackageStartupMessages({
   library(lubridate)
   library(viridis)
   library(ggsci)
-  library(igraph)
+  # library(igraph)
   library(r5r)
 })
 
@@ -65,8 +65,9 @@ list(
   tar_target(students_geo_file, "../data_raw/BID_ALUNOS_COORDENADA_2022.csv", format = "file"),
   tar_target(students_socio_file, "../data_raw/BID_INFORMACOES_SOCIOECONOMICAS_2022.csv", format = "file"),
   tar_target(schools_raw_file, "../data_raw/BID_CADASTRO_ESCOLA_2022.csv", format = "file"),
+  tar_target(schools_census_raw_file, "../data_raw/schools_sp_geo2.csv", format = "file"),
   tar_target(rooms_raw_file, "../data_raw/BID_AMBIENTE_METRAGEM_2022.csv", format = "file"),
-  tar_target(dem_file, "../network/topografia3_spo.tif"),
+  tar_target(dem_file, "../network/bkp/topografia3_spo.tif"),
   tar_target(r5_folder, "../network/"),
   
   ## geographical boundaries and topography
@@ -75,7 +76,14 @@ list(
   tar_target(boundary_muni, get_boundary_muni()),
   tar_target(boundary_rmsp, get_boundary_rmsp()),
   tar_target(census_tracts, get_census_tracts()),
+  
+  tar_target(districts_by_dre_table, build_districts_by_dre_table(schools_geo)),
+  tar_target(sme_districts, build_districts(census_tracts, districts_by_dre_table)),
+  tar_target(sme_regions, build_regions(sme_districts)),
+
   tar_target(topography, read_topography(dem_file)),
+  
+  # tar_target(sme_sectors, build_sme_sectors(schools_geo, census_tracts)),
   
   ## hexagonal grid (Uber H3 system)
   tar_target(hexgrid_res_10, build_hex_grid(boundary_muni, 10)),
@@ -99,10 +107,19 @@ list(
   tar_target(students_processed, recode_students_data(students_geo)),
   
   ## process schools and rooms data
-  tar_target(schools_geo, load_schools(schools_raw_file)),
-  tar_target(rooms_geo, load_rooms(rooms_raw_file)),
+  tar_target(schools_raw, load_schools(schools_raw_file)),
+  tar_target(schools_with_size, add_students_rooms_to_schools(schools_raw, students_processed, rooms_fixed)),
+  tar_target(schools_geo, add_h3_to_schools(schools_with_size)),
   
-
+  tar_target(schools_census_raw, load_schools_census(schools_census_raw_file)),
+  
+  # tar_target(schools_with_students, populate_schools(schools_geo, students_processed)),
+  tar_target(rooms_geo, load_rooms(rooms_raw_file)),
+  tar_target(rooms_fixed, fix_room_capacity(rooms_geo)),
+  
+  ## 
+  # tar_target(hexgrid, populate_hexgrid(hexgrid_res_10, students_processed, schools_with_students) ),
+  
   ## Report 02 targets ----------------------------------------------------
 
   ## figures section 1 - study area
@@ -133,7 +150,12 @@ list(
   tar_target(figure_distance_to_school, create_plot_distance_to_school(students_processed), format = "file"),
   
   ## Report 03 targets ----------------------------------------------------
-  tar_target(figure_unitary_access, create_map_unitary_access(unitary_access_r10, hexgrid_res_10), format = "file")
+  tar_target(figure_unitary_access, create_map_unitary_access(unitary_access_r10, hexgrid_res_10), format = "file"),
+  tar_target(figure_regions_districts, create_map_regions_districts(sme_districts), format = "file"),
+  tar_target(plot_problematic_rooms, create_plot_problematic_rooms(rooms_geo), format = "file"),
+  tar_target(plot_fixed_rooms, create_plot_fixed_rooms(rooms_fixed), format = "file"),
+  tar_target(plot_fixed_rooms_histogram, create_plot_fixed_rooms_histogram(rooms_fixed), format = "file")
+  
 )
 
 

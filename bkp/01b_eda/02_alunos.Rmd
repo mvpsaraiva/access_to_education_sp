@@ -1,0 +1,95 @@
+---
+title: "EDA Alunos"
+author: "M. Saraiva"
+date: '2022-07-01'
+output: html_document
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(data.table)
+library(sf)
+library(viridis)
+library(ggspatial)
+```
+
+## Análise Exploratória - Alunos
+
+
+## Carregar dados
+
+```{r cars}
+alunos_df <- read_rds("../../../data/alunos.rds")
+alunos_geo_df <- read_rds("../../../data/alunos_geo.rds")
+socio_df <- read_rds("../../../data/socio.rds")
+```
+
+## Alunos
+
+```{r}
+alunos_df
+```
+
+```{r}
+alunos_df %>%
+  count(SG_ETAPA, SG_SERIE_ENSINO)
+```
+
+```{r}
+alunos_df %>%
+  count(TP_RACA_COR)
+```
+
+```{r}
+socio_df %>%
+  count(BF, FAIXA_RENDA) %>%
+  replace_na(list(BF = "NAO")) 
+```
+
+,[QT_DISTANCIA]	DISTANCIA À PE PARA ESCOLA DA MATRICULA
+,[QT_DISTANCIA_CARRO]	DISTANCIA DE CARRO PARA ESCOLA DA MATRICULA
+,[TEG]	SE UTILIZA TRANSPORTE NA MATRICULA
+
+```{r}
+alunos_df %>%
+  select(CD_ALUNO, QT_DISTANCIA, QT_DISTANCIA_CARRO, TEG)
+```
+
+
+
+```{r}
+alunos_df %>%
+  count(TEG)
+```
+
+
+
+```{r}
+alunos_geo_df <- alunos_geo_df %>% drop_na()
+alunos_sf <- alunos_geo_df %>% st_as_sf(coords = c("lon", "lat"), crs = 4326)
+alunos_geo_df$hex <- h3jsr::point_to_h3(alunos_sf, res = 8)
+
+hex_alunos <- alunos_geo_df %>% group_by(hex) %>% summarise(n = n())
+hex_alunos$geometry <- h3jsr::h3_to_polygon(hex_alunos$hex)
+hex_alunos <- st_as_sf(hex_alunos, crs = 4326)
+```
+
+
+
+```{r}
+hex_alunos %>%
+  filter(n > 8) %>%
+  ggplot() +
+  annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+  geom_sf(aes(fill=n), color = NA) +
+  scale_fill_viridis()
+```
+
+
+
+
+
+

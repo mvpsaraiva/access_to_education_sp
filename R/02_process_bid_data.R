@@ -209,8 +209,33 @@ load_schools <- function(schools_file) {
     mutate(REDE = replace_na(REDE, "NAO INFORMADO")) |> 
     janitor::clean_names()
   
+  return(escolas_df)
+}
+
+# tar_load(schools_raw)
+# tar_load(students_processed)
+# tar_load(rooms_fixed)
+add_students_rooms_to_schools <- function(schools_raw, students_processed, rooms_fixed) {
+
+  students_by_school <- students_processed |> 
+    count(cd_escola, name = "qt_alunos_adj")
+  
+  rooms_by_school <- rooms_fixed |> 
+    group_by(cd_escola) |> 
+    summarise(n_ambientes = n(), qt_area_ambientes = sum(qt_area_util_1_2_adj))
+  
+  schools_fill <- schools_raw |> 
+    left_join(students_by_school, by = "cd_escola", fill = 0) |> 
+    left_join(rooms_by_school, by = "cd_escola", fill = 0)
+  
+  return(schools_fill)
+  
+}
+
+# tar_load(schools_size)
+add_h3_to_schools <- function(schools_size) {
   # converter para simple features com coordenadas
-  escolas_sf <- escolas_df |> 
+  escolas_sf <- schools_size |> 
     select(cd_escola, lat, lon) |> 
     st_as_sf(coords = c("lon", "lat"), crs = 4326)
   
@@ -220,11 +245,11 @@ load_schools <- function(schools_file) {
   hex_res10 <- h3jsr::point_to_h3(escolas_sf, res = 10)
   
   # atribuir hex id a cada aluno
-  escolas_df$id_hex_08 <- hex_res8
-  escolas_df$id_hex_09 <- hex_res9
-  escolas_df$id_hex_10 <- hex_res10
+  schools_size$id_hex_08 <- hex_res8
+  schools_size$id_hex_09 <- hex_res9
+  schools_size$id_hex_10 <- hex_res10
   
-  return(escolas_df)
+  return(schools_size)
 }
 
 # rooms_file <- tar_read(rooms_raw_file)
@@ -247,4 +272,17 @@ load_rooms <- function(rooms_file) {
   return(ambientes_df)
 }
   
+# Join Schools and Students -----------------------------------------------
+
+# schools_geo <- tar_read(schools_geo)
+# students_processed <- tar_read(students_processed)
+# populate_schools <- function(schools_geo, students_processed) {
+#   
+#   students_processed |> 
+#     select(cd_aluno, cd_escola, sg_etapa, sg_serie_ensino)
+#   
+#   
+#   
+# }
+
 
