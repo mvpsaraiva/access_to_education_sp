@@ -141,8 +141,8 @@ create_table_students_by_stage <- function(students_processed) {
     filter(!(sg_etapa = str_detect(sg_etapa, "ESPECIAL"))) |> 
     group_by(sg_etapa, sg_serie_ensino) |> 
     summarise(n = n(), 
-              lq_idade = quantile(idade, 0.25),
-              uq_idade = quantile(idade, 0.75),
+              lq_idade = quantile(idade, 0.25, na.rm = T),
+              uq_idade = quantile(idade, 0.75, na.rm = T),
               .groups = "drop")
 
   table_path <- "output/report_02/tab_02_students_by_stage.xlsx"

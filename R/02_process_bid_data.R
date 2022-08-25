@@ -23,7 +23,7 @@ load_students_base_data <- function(raw_students_file) {
   # calcular idade
   # converter distâncias para numérico
   alunos_filtered_df <- alunos_filtered_df %>%
-    mutate(DT_NASCIMENTO_ALUNO = as.POSIXct(DT_NASCIMENTO_ALUNO),
+    mutate(DT_NASCIMENTO_ALUNO = as.POSIXct(DT_NASCIMENTO_ALUNO, format = "%Y-%m-%d %H:%M:%OS"),
            IDADE = trunc((DT_NASCIMENTO_ALUNO %--% ymd("2022-03-01")) / years(1)),
            QT_DISTANCIA = as.numeric(QT_DISTANCIA),
            QT_DISTANCIA_CARRO = as.numeric(QT_DISTANCIA_CARRO))
