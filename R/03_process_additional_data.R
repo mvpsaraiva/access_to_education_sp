@@ -10,11 +10,22 @@ load_schools_census <- function(raw_file) {
   # selecionar somente escolas estaduais com matriculas regulares
   escolas_df <- escolas_df[IN_REGULAR == 1 & TP_DEPENDENCIA == 2 & TP_SITUACAO_FUNCIONAMENTO == 1]
   
+  escolas_df |> select(cd_sit = TP_SITUACAO_FUNCIONAMENTO,
+                       depadm = TP_DEPENDENCIA,
+                       nomedep = "ESTADUAL",
+                       rede = "DIR",
+                       dre
+                       )
+  
+  glimpse(escolas_df) |> clipr::write_clip()
   # read schools data in csv format
   escolas_geo_df <- fread(raw_file)
   
   # remove schools with bad geolocation
-  escolas_geo_df <- escolas_df |> filter(!(CO_ENTIDADE %in% c(35483655, 35902615)))
+  escolas_geo_df <- escolas_geo_df |> filter(SG_UF == "SP",
+                                             NO_MUNICIPIO == "São Paulo",
+                                             !(CO_ENTIDADE %in% c(35483655, 35902615)))
+  
   
   
 
