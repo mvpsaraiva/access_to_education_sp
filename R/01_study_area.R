@@ -92,6 +92,8 @@ build_hex_grid <- function(muni, resolution) {
   hexgrid <- h3jsr::h3_to_polygon(hexes, simple = FALSE) |> 
     st_as_sf(crs = 4326)
   
+  hexgrid_ext <- st_join(hexgrid, muni, largest = TRUE)
+  
   return(hexgrid)
 }
 

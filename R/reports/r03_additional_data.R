@@ -118,6 +118,168 @@ create_plot_fixed_rooms_histogram <- function(rooms_fixed) {
   return(figure_path)
 }
 
+# state_schools <- tar_read(state_schools)
+# hexgrid_res_08 <- tar_read(hexgrid_res_08)
+# boundary <- tar_read(boundary_muni)
+create_map_state_schools <- function(state_schools, boundary, hexgrid_res_08) {
+  
+  # Schools
+  schools_sf <- state_schools |> 
+    select(co_entidade, in_inf, in_fund, lat, lon) |> 
+    pivot_longer(cols = in_inf:in_fund, names_to = "nivel_ensino", values_to = "presente") |> 
+    filter(presente == 1) |> 
+    mutate(presente = "Escolas") |> 
+    st_as_sf(coords = c("lon", "lat"), crs = 4326)
+  
+  schools_sf$nivel_ensino <- factor(schools_sf$nivel_ensino,
+                                    levels = c("in_inf", "in_fund"),
+                                    labels = c("Infantil", "Fundamental"))
+  
+  p_schools <- schools_sf |>
+    ggplot() +
+    annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+    geom_sf(aes(color = nivel_ensino), size = 0.5) +
+    geom_sf(data = boundary, fill = NA, color = "grey40") +
+    annotation_scale(style = "ticks", location = "br") +
+    coord_sf(datum = NA) +
+    scale_color_brewer(palette = "Set1") +
+    theme_minimal() +
+    theme(legend.position = "bottom") +
+    labs(color = "Nível de Ensino") +
+    facet_wrap(~presente)
+
+  # Enrollments
+  enrollments_by_hex <- state_schools |> 
+    group_by(id_hex_08) |> 
+    summarise(across(.cols = qt_mat_fund_ai:qt_mat_fund_af, sum)) |> 
+    pivot_longer(cols = qt_mat_fund_ai:qt_mat_fund_af, 
+                 names_to = "nivel_ensino", values_to = "matriculas")
+  
+  enrollments_by_hex$nivel_ensino <- factor(enrollments_by_hex$nivel_ensino,
+                                            levels = c("qt_mat_fund_ai", "qt_mat_fund_af"),
+                                            labels = c("Matrículas: Anos Iniciais", "Matrículas: Anos Finais"))
+  
+  p_enrollments <-
+    hexgrid_res_08 |> 
+    left_join(enrollments_by_hex, by = c("h3_address" = "id_hex_08")) |> 
+    drop_na() |> 
+    ggplot() +
+    annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+    geom_sf(aes(fill = matriculas), color = NA) +
+    geom_sf(data = boundary, fill = NA, color = "grey40") +
+    annotation_scale(style = "ticks", location = "br") +
+    coord_sf(datum = NA) +
+    scale_fill_distiller(palette = "YlOrRd", direction = 1, na.value = "transparent",
+                         limits = c(0, 2500), breaks = c(0, 1250, 2500)) +
+    theme_minimal() +
+    theme(legend.position = "bottom") +
+    labs(fill = "Número de\nMatrículas") +
+    facet_wrap(~nivel_ensino)  
+  
+  # combine plots
+  p_combined <- p_schools + p_enrollments +
+    plot_layout(design = "ABB", guides = "collect") & theme(legend.position = "bottom")
+  
+  
+  # save figure
+  figure_path <- "output/report_03/fig_xx_state_schools.png"
+  ggsave(plot = p_combined, filename = figure_path,
+         width = 16, height = 11, units = "cm", dpi = 300, scale = 1.2)
+  
+  return(figure_path)
+}
+
+# state_schools <- tar_read(state_schools)
+# hexgrid_res_08 <- tar_read(hexgrid_res_08)
+# boundary <- tar_read(boundary_muni)
+create_map_state_enrollments <- function(state_schools, boundary, hexgrid_res_08) {
+  
+  enrollments_by_hex <- state_schools |> 
+    group_by(id_hex_08) |> 
+    summarise(across(.cols = qt_mat_fund_ai:qt_mat_fund_af, sum)) |> 
+    pivot_longer(cols = qt_mat_fund_ai:qt_mat_fund_af, 
+                 names_to = "nivel_ensino", values_to = "matriculas")
+  
+  enrollments_by_hex$nivel_ensino <- factor(enrollments_by_hex$nivel_ensino,
+                                            levels = c("qt_mat_fund_ai", "qt_mat_fund_af"),
+                                            labels = c("Anos Iniciais", "Anos Finais"))
+
+  p <-
+    hexgrid_res_08 |> 
+    left_join(enrollments_by_hex, by = c("h3_address" = "id_hex_08")) |> 
+    drop_na() |> 
+    ggplot() +
+    annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+    geom_sf(aes(fill = matriculas), color = NA) +
+    geom_sf(data = boundary, fill = NA, color = "grey40") +
+    annotation_scale(style = "ticks", location = "br") +
+    coord_sf(datum = NA) +
+    scale_fill_distiller(palette = "YlOrRd", direction = 1, na.value = "transparent",
+                         limits = c(0, 2500)) +
+    theme_minimal() +
+    labs(fill = "Número de\nMatrículas") +
+    facet_wrap(~nivel_ensino)
+    
+  figure_path <- "output/report_03/fig_xx_state_enrollments.png"
+  ggsave(plot = p, filename = figure_path,
+         width = 16, height = 9, units = "cm", dpi = 300, scale = 1.2)
+  
+  return(figure_path)
+  
+}
+
+
+# sme_districts <- tar_read(sme_districts)
+# pop_growth_estimates <- tar_read(pop_growth_estimates)
+# boundary <- tar_read(boundary_muni)
+create_map_pop_growth <- function(sme_districts, pop_growth_estimates, boundary) {
+  
+  pop_growth_estimates$cod_distr_short <- str_sub(pop_growth_estimates$cod_distr, 4, 6)
+  
+  sme_districts_growth <- sme_districts |> 
+    left_join(pop_growth_estimates, by = c("cd_dist" = "cod_distr_short"))
+
+  sme_districts_filtered <- sme_districts_growth |> 
+    filter(ano >= 2020, ano <= 2040, faixa_idade %in% c("de_00_a_03_anos",
+                                                       "de_04_e_05_anos",
+                                                       "de_06_a_10_anos",
+                                                       "de_11_a_14_anos"))
+  
+  sme_districts_filtered$faixa_idade <- recode(sme_districts_filtered$faixa_idade,
+                                               "de_00_a_03_anos" = "0 a 3 anos",
+                                               "de_04_e_05_anos" = "4 a 5 anos",
+                                               "de_06_a_10_anos" = "6 a 10 anos",
+                                               "de_11_a_14_anos" = "11 a 14 anos"
+  )
+  
+  sme_districts_filtered$ano <- paste0(sme_districts_filtered$ano - 5, 
+                                       " - ",
+                                       sme_districts_filtered$ano)
+  
+  p <- sme_districts_filtered |> 
+    ggplot() +
+    annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+    geom_sf(aes(fill = taxa_crescimento), color = NA) +
+    geom_sf(data = boundary, fill = NA, color = "grey40", size = 0.5) +
+    coord_sf(datum = NA) +
+    annotation_scale(style = "ticks", location = "br") +
+    scale_fill_gradient2(low = "orangered3", high = "steelblue3",
+                         limits = c(-0.2, 0.2), 
+                         breaks = c(-0.086, 0, 0.1, 0.178),
+                         labels = scales::percent) +
+    theme_minimal() +
+    labs(fill = "Taxa de\nCrescimento") +
+    facet_grid(faixa_idade ~ ano, switch = "y")
+
+  figure_path <- "output/report_03/fig_xx_pop_growth_rates.png"
+  ggsave(plot = p, filename = figure_path,
+         width = 16, height = 16, units = "cm", dpi = 300, scale = 1.2)
+  
+  return(figure_path)
+  
+}
+
+
 # rooms_fixed |>
 #   mutate(diff = qt_area_util_1_2_adj - qt_real_pessoa_adj) |>
 #   ggplot(aes(x=qt_area_util_1_2_adj, y=qt_real_pessoa_adj)) +

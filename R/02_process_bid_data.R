@@ -213,29 +213,9 @@ load_schools <- function(schools_file) {
 }
 
 # tar_load(schools_raw)
-# tar_load(students_processed)
-# tar_load(rooms_fixed)
-add_students_rooms_to_schools <- function(schools_raw, students_processed, rooms_fixed) {
-
-  students_by_school <- students_processed |> 
-    count(cd_escola, name = "qt_alunos_adj")
-  
-  rooms_by_school <- rooms_fixed |> 
-    group_by(cd_escola) |> 
-    summarise(n_ambientes = n(), qt_area_ambientes = sum(qt_area_util_1_2_adj))
-  
-  schools_fill <- schools_raw |> 
-    left_join(students_by_school, by = "cd_escola", fill = 0) |> 
-    left_join(rooms_by_school, by = "cd_escola", fill = 0)
-  
-  return(schools_fill)
-  
-}
-
-# tar_load(schools_size)
-add_h3_to_schools <- function(schools_size) {
+add_h3_to_schools <- function(schools_raw) {
   # converter para simple features com coordenadas
-  escolas_sf <- schools_size |> 
+  escolas_sf <- schools_raw |> 
     select(cd_escola, lat, lon) |> 
     st_as_sf(coords = c("lon", "lat"), crs = 4326)
   
@@ -245,11 +225,28 @@ add_h3_to_schools <- function(schools_size) {
   hex_res10 <- h3jsr::point_to_h3(escolas_sf, res = 10)
   
   # atribuir hex id a cada aluno
-  schools_size$id_hex_08 <- hex_res8
-  schools_size$id_hex_09 <- hex_res9
-  schools_size$id_hex_10 <- hex_res10
+  schools_raw$id_hex_08 <- hex_res8
+  schools_raw$id_hex_09 <- hex_res9
+  schools_raw$id_hex_10 <- hex_res10
   
-  return(schools_size)
+  return(schools_raw)
+}
+
+# tar_load(schools_geo)
+# tar_load(students_processed)
+add_enrollments_to_schools <- function(schools_geo, students_processed) {
+
+  students_by_school <- students_processed |> 
+    count(cd_escola, sg_etapa, sg_serie_ensino)
+  
+  schools_fill <- schools_geo |> 
+    left_join(students_by_school, by = "cd_escola", fill = 0) |> 
+    select(depadm, nomedep, rede, dre, nm_unidade_educacao, cd_dist, distr, setor,
+           cd_escola, nomesc, sg_etapa, sg_serie_ensino, n_alunos = n, 
+           lat, lon, id_hex_10)
+  
+  return(schools_fill)
+  
 }
 
 # rooms_file <- tar_read(rooms_raw_file)
@@ -272,7 +269,35 @@ load_rooms <- function(rooms_file) {
   return(ambientes_df)
 }
   
-# Join Schools and Students -----------------------------------------------
+
+
+# Populate HexGrid --------------------------------------------------------
+# hexgrid <- tar_read(hexgrid_res_10)
+# students_processed <- tar_read(students_processed)
+add_students_to_grid <- function(hexgrid, students_processed) {
+  
+  students_by_hex <- students_processed |> 
+    count(id_hex_10, sg_etapa, sg_serie_ensino, name = "n_estudantes") |> 
+    drop_na()
+  
+  hexgrid_pop <- 
+    hexgrid |> left_join(students_by_hex, by = c("h3_address" = "id_hex_10")) |> 
+    drop_na()
+}
+
+# hexgrid <- tar_read(hexgrid_res_10)
+# schools_enrollments <- tar_read(schools_enrollments)
+add_enrollments_to_grid <- function(hexgrid, schools_enrollments) {
+  
+  enrollments_by_hex <- schools_enrollments |> 
+    count(id_hex_10, sg_etapa, sg_serie_ensino, wt = n_alunos, name = "n_matriculas") |> 
+    drop_na()
+  
+  hexgrid_mat <- 
+    hexgrid |> left_join(enrollments_by_hex, by = c("h3_address" = "id_hex_10")) |> 
+    drop_na()
+
+}
 
 # schools_geo <- tar_read(schools_geo)
 # students_processed <- tar_read(students_processed)
@@ -284,5 +309,18 @@ load_rooms <- function(rooms_file) {
 #   
 #   
 # }
+
+
+# schools_with_size |> 
+#   mutate(rooms_na = is.na(qt_area_ambientes),
+#          students_na = is.na(qt_alunos_adj)) |> 
+#   count(nomedep, rooms_na, students_na)
+# 
+# schools_with_size |> 
+#   ggplot(aes(qt_alunos, qt_alunos_adj)) +
+#   geom_point() +
+#   geom_abline()
+
+
 
 
