@@ -94,7 +94,7 @@ build_hex_grid <- function(muni, resolution) {
   
   hexgrid_ext <- st_join(hexgrid, muni, largest = TRUE)
   
-  return(hexgrid)
+  return(hexgrid_ext)
 }
 
 # centroid <- tar_read(sp_centroid)

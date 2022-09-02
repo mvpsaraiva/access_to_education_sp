@@ -279,6 +279,58 @@ create_map_pop_growth <- function(sme_districts, pop_growth_estimates, boundary)
   
 }
 
+# hexgrid_students_future <- tar_read(hexgrid_students_future)
+# boundary <- tar_read(boundary_muni)
+# hexgrid_res_08 <- tar_read(hexgrid_res_08)
+create_map_pop_growth_estimates <- function(hexgrid_students_future, boundary, hexgrid_res_08) {
+  
+  # agregar em escala maior
+  hex_08 <- h3jsr::get_parent(hexgrid_students_future$h3_address, res = 8)
+  hexgrid_students_future$h3_parent <- hex_08
+  
+  # agrupar por etapa de ensino
+  students_by_hex_year <- hexgrid_students_future |> 
+    st_set_geometry(NULL) |> 
+    filter(!str_detect(sg_etapa, "ESPECIAL"), ano <= 2040) |> 
+    group_by(h3_parent, sg_etapa, ano) |> 
+    summarise(n_estudantes = sum(n_estudantes, na.rm = TRUE), .groups = "drop")
+  
+  # calcular diferença
+  students_by_hex_year <- students_by_hex_year |> 
+    group_by(h3_parent, sg_etapa) |> 
+    arrange(ano) |> 
+    mutate(diff_estudantes = n_estudantes - first(n_estudantes))
+  
+  # juntar geometria e dados
+  pop_hexgrid <- left_join(hexgrid_res_08, students_by_hex_year, by = c("h3_address" = "h3_parent")) |> 
+    filter(ano > 2022) |> 
+    drop_na() |> 
+    st_as_sf()
+    
+  p <- pop_hexgrid |> 
+    ggplot() +
+    annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+    geom_sf(aes(fill = diff_estudantes), color = NA) +
+    geom_sf(data = boundary, fill = NA, color = "grey40") +
+    annotation_scale(style = "ticks", location = "br") +
+    coord_sf(datum = NA) +
+    scale_fill_gradient2(low = "orangered3", high = "steelblue3",
+                         limits = c(-425, 425)
+                         # breaks = c(-0.086, 0, 0.1, 0.178)
+                         ) +
+    theme_minimal() +
+    labs(fill = "Diferença\npara 2022") +
+    facet_grid(sg_etapa ~ ano, switch = "y")
+  
+  figure_path <- "output/report_03/fig_xx_future_pop_estimates.png"
+  ggsave(plot = p, filename = figure_path,
+         width = 16, height = 9, units = "cm", dpi = 300, scale = 1.2)
+  
+  return(figure_path)
+  
+}
+  
+# state_schools$co_distrito |> unique() |> sort()
 
 # rooms_fixed |>
 #   mutate(diff = qt_area_util_1_2_adj - qt_real_pessoa_adj) |>

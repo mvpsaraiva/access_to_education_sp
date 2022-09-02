@@ -1,5 +1,5 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|7844b330346eb0cc|||||||||||||||
+.Random.seed|object|e4e700a7bcfeb467|||||||||||||||
 add_enrollments_to_grid|function|4d9ad23fbfdaae31|||||||||||||||
 add_enrollments_to_schools|function|7f9061601da65dce|||||||||||||||
 add_h3_schools|function|95be9cba3f30a556|||||||||||||||
@@ -13,7 +13,7 @@ boundary_rmsp|stem|201b93f745b3db69|9419c572e2d81fe2|f8bfa83d699e4fa7|-93853802|
 build_central_bounding_box|function|dfd44cf270bda18f|||||||||||||||
 build_districts|function|014430ab78bccee0|||||||||||||||
 build_districts_by_dre_table|function|fc91bf20e79ad3f9|||||||||||||||
-build_hex_grid|function|3c46bd180a2c6a33|||||||||||||||
+build_hex_grid|function|07a3cc1d7fa48cc0|||||||||||||||
 build_regions|function|206d7ed21f682f25|||||||||||||||
 build_sme_sectors|function|e5e430586166ff7d|||||||||||||||
 calculate_unitary_access|function|5d436b8fdbbf906b|||||||||||||||
@@ -22,6 +22,7 @@ compute_travel_times|function|46d615b890815d5d|||||||||||||||
 create_map_census_tracts|function|a59b470fe5b1ab4d|||||||||||||||
 create_map_hexgrid|function|696fab8a749890f6|||||||||||||||
 create_map_pop_growth|function|47ee96622275a2b5|||||||||||||||
+create_map_pop_growth_estimates|function|57c190d2b019db8d|||||||||||||||
 create_map_regions_districts|function|c2b0689d1a50fd40|||||||||||||||
 create_map_schools_count|function|c3a6c599b92eb89a|||||||||||||||
 create_map_state_enrollments|function|99b6915869474e0b|||||||||||||||
@@ -42,37 +43,49 @@ create_table_student_count|function|45fff64a34192ff8|||||||||||||||
 create_table_students_by_income|function|6f1ba582ba65dd8d|||||||||||||||
 create_table_students_by_race|function|bcda453dc16c5eff|||||||||||||||
 create_table_students_by_stage|function|85e004d2809fd669|||||||||||||||
-dem_file|stem|4527340994afc57c|629533bdec9f1685|ef46db3751d8e999|-80886719||t19233.8080137767s|e7d9c43b1c994be3|87|rds|local|vector|||0||
+dem_file|stem|0c1f68ee2de9953f|629533bdec9f1685|ef46db3751d8e999|-80886719|../network/bkp/topografia3_spo.tif|t19191.8328369107s|056b6373b01d10e6|16378998|file|local|vector|||0||
 dissolve_polygons|function|89d3a51415c0eb09|||||||||||||||
 districts_by_dre_table|stem|02aa394d7b6ffdef|abeb68320e2a4ab7|48c16b7f19bebb65|-438865953||t19235.6909738152s|17bff64ca42c1bf5|1836|rds|local|vector|||0.037||
+enrollments_by_year|stem|eb00c5de7212df29|f1f215d6de32e645|fae32e3fcd4d62db|-1173371669||t19237.0751861313s|c5a9b1e103455f1c|40440|rds|local|vector|||30.671||
+estimate_future_population|function|76e8d42b1d45e12a|||||||||||||||
+estimate_future_population_census|function|828137a104770dc8|||||||||||||||
+estimate_future_population_seade|function|76e8d42b1d45e12a|||||||||||||||
+estimate_growth|function|ff34b3e7258825bb|||||||||||||||
+estimate_growth_by_district_census|function|b249461ae5c53ea7|||||||||||||||
 figure_census_tracts|stem|5ebf2641f846fcc5|50f5845873ea8a4f|431e9308b2938696|1351849521|output/report_02/fig_02_areal_units.png|t19233.8174130274s|bc09bd6b1ec247d9|1158017|file|local|vector|||4.704||
 figure_distance_to_school|stem|32b3abaf8c8042f4|5b467b21cd9854ee|85c080ebe505ce4a|-1280171210|output/report_02/fig_08_distance_to_school.png|t19233.8196529405s|23b66aad197e8926|132370|file|local|vector|||1.45||
 figure_fixed_rooms|stem|27a5f6bc8c7df15f|24dcbfe993cd92c3|8d69ec409c18b5ee|919932854|output/report_03/fig_xx_fixed_rooms.png|t19234.7925609365s|6ac0bba720a50923|183090|file|local|vector|||0.689||
 figure_fixed_rooms_histogram|stem|7de10702e1fe7441|f0b317147006a6a1|a422755a129d94a5|-1158904610|output/report_03/fig_xx_fixed_rooms_histogram.png|t19234.7925528808s|c3422df6df761175|53669|file|local|vector|||0.373||
-figure_hexgrid|stem|fa74760f541c3b74|f9e81ca9ed2d3f62|77b3409aa8e5dc0b|717168903|output/report_02/fig_03_hexgrid.png|t19235.9127101592s|00ebe6dec572cbcf|1343217|file|local|vector|||24.846||
-figure_pop_growth|stem|67e039fde64498d2|405eae7d68a95fc2|a52efe72a70a26c4|881047956|output/report_03/fig_xx_pop_growth_rates.png|t19236.0307275346s|a55c6396d706c008|2736405|file|local|vector|||51.693||
+figure_hexgrid|stem|fa74760f541c3b74|f9e81ca9ed2d3f62|45fb35c747ea383c|717168903|output/report_02/fig_03_hexgrid.png|t19236.5727961395s|00ebe6dec572cbcf|1343217|file|local|vector|||24.125||
+figure_pop_growth|stem|67e039fde64498d2|ecc89f85403d601f|719ca72d9b8f84b5|881047956|output/report_03/fig_xx_pop_growth_rates.png|t19237.0226114889s|a55c6396d706c008|2736405|file|local|vector|||49.942||
+figure_pop_growth_estimates|stem|3c57f256c927b908|42431e8425e46d65|2869447bad57b1e5|-467415123|output/report_03/fig_xx_future_pop_estimates.png|t19237.0237838726s|296de8602d7dd537|1129243|file|local|vector|||52.145||
 figure_problematic_rooms|stem|0f3df69a0d7bd3f4|2b441262a6a2cc40|7fae35724e58eb97|655358239|output/report_03/fig_xx_problematic_rooms.png|t19234.792547603s|2119561c853477c7|84147|file|local|vector|||1.003|Removed 3107 rows containing missing values geom_point.|
 figure_regions_districts|stem|8430c250493a98f0|367aaf6f0e6bb606|38aa40b96da4a3c9|2138561584|output/report_03/fig_01_regions_districts.png|t19233.8261576111s|af681a7b0f7fc171|695441|file|local|vector|||2.294|n too large, allowed maximum for palette Paired is 12Returning the palette you asked for with that many colors|
-figure_schools_count|stem|a0832c352b6056b4|12d7b38b1b3cb3bc|5f91489c53342945|1274182954||t19235.9069153301s|9903306e1685fb67|94|rds|local|vector|||21.721||
+figure_schools_count|stem|a0832c352b6056b4|12d7b38b1b3cb3bc|9ea2342150339778|1274182954||t19236.5723637728s|9903306e1685fb67|94|rds|local|vector|||10.916||
 figure_state_enrollments|stem|1c750c56347a1f70|99c1312c1ebcb741|560560c74da751ef|-904558756||t19234.8409407213s|2005da2f14a67e22|98|rds|local|vector|||5.944||
-figure_state_schools|stem|847e275eed720de2|2f07055f00189c21|5589351bd39443c4|2142771329|output/report_03/fig_xx_state_schools.png|t19236.0122446547s|22275016fe4debb7|1656932|file|local|vector|||10.507|lengthx  2  1 in coercion to logical1|
-figure_students_by_income|stem|c08d3fc0fcb09250|c1784b07a7af6994|ef5a13a0c475e1e1|-1869822588||t19235.9073908025s|bf160f080fbf1dbb|99|rds|local|vector|||7.616||
-figure_students_by_race|stem|bc6232634e76ba1a|6c19af33d9b8c65f|74ae93708c2fded1|1970308666||t19235.9073026063s|f0d5811415b6b792|97|rds|local|vector|||5.899||
-figure_students_by_teg|stem|455c36a10279bdd9|669aced1a382a4f7|29f1473d872835c0|-974013907||t19235.9074100622s|41200f7f0df0ebd3|96|rds|local|vector|||1.655||
-figure_students_count|stem|7f10538adfd0920c|fe8876f9ff26d319|bd723cde496d7897|-476955882||t19235.9072342717s|dfd0d40dc0c5171b|95|rds|local|vector|||2.49||
+figure_state_schools|stem|847e275eed720de2|2f07055f00189c21|f81de6ff759c1d3a|2142771329|output/report_03/fig_xx_state_schools.png|t19236.5725168303s|22275016fe4debb7|1656932|file|local|vector|||8.072|lengthx  2  1 in coercion to logical1|
+figure_students_by_income|stem|c08d3fc0fcb09250|c1784b07a7af6994|9b4304245ff25bdd|-1869822588||t19236.5722367341s|bf160f080fbf1dbb|99|rds|local|vector|||7.711||
+figure_students_by_race|stem|bc6232634e76ba1a|6c19af33d9b8c65f|5984112a0d30384c|1970308666||t19236.5721474274s|f0d5811415b6b792|97|rds|local|vector|||6.66||
+figure_students_by_teg|stem|455c36a10279bdd9|669aced1a382a4f7|32a3cabf85ba5ccd|-974013907||t19236.5724232643s|41200f7f0df0ebd3|96|rds|local|vector|||1.702||
+figure_students_count|stem|7f10538adfd0920c|fe8876f9ff26d319|4763d9cb6a117788|-476955882||t19236.5724034955s|dfd0d40dc0c5171b|95|rds|local|vector|||3.427||
 figure_study_area|stem|b32c3b191c404b2b|50e9151df7d6104f|9e4598eb728405fa|1554767824|output/report_02/fig_01_study_area.png|t19233.8097851003s|8ae73d96acd1b3cf|995050|file|local|vector|||16.703||
-figure_unitary_access|stem|2bdadca8a2aa542f|5a1c68f78ac69d4f|9de50ae39f0e9071|-704061134|output/report_03/fig_xx_unitary_access.png|t19235.9129103942s|115cc7ccdb4d9908|531051|file|local|vector|||12.161||
+figure_unitary_access|stem|2bdadca8a2aa542f|5a1c68f78ac69d4f|3ce7591a82ec9b86|-704061134|output/report_03/fig_xx_unitary_access.png|t19236.5729655861s|115cc7ccdb4d9908|531051|file|local|vector|||12.104||
 fix_room_capacity|function|0dba3dc7d9f6742b|||||||||||||||
 get_boundary_muni|function|74258ea8300d213d|||||||||||||||
 get_boundary_rmsp|function|035076d4fb30056c|||||||||||||||
 get_census_tracts|function|4a3e146862ccf647|||||||||||||||
-hexgrid_enrollments|stem|abfb96ac0e7c4647|706ba1ebac533f2e|78b7aee1ebe7424a|1821618822||t19235.912738956s|63f56550f3fbe3b2|357812|rds|local|vector|||2.337||
-hexgrid_res_08|stem|64feee3823a6b097|714d0a4ca5969453|b784836abd3dd6fd|-1573168556||t19235.8958746634s|3a28489993ade35a|129268|rds|local|vector|||15.589|attribute variables are assumed to be spatially constant throughout all geometries|
-hexgrid_res_09|stem|713928e7565843b6|126ca3758125d62b|b784836abd3dd6fd|1402420497||t19235.9066629177s|1125594bc534be43|936804|rds|local|vector|||113.551|attribute variables are assumed to be spatially constant throughout all geometries|
-hexgrid_res_10|stem|f4fe5bca8d6d89ca|6e96329e81a8132a|b784836abd3dd6fd|955620746||t19235.9053423348s|56150700f500457d|7830509|rds|local|vector|||816.845|attribute variables are assumed to be spatially constant throughout all geometries|
-hexgrid_students|stem|99b554d13b95bb2e|1a718e0438b51838|21f05a8a3655cabc|2045375246||t19235.9076026122s|471041c03248e4e7|4898766|rds|local|vector|||14.842||
+hexgrid_enrollments|stem|c818e438f8e57e92|706ba1ebac533f2e|05d57581822451ee|1821618822||t19236.5728247047s|5b95ff621c6f88df|374217|rds|local|vector|||2.28||
+hexgrid_res_08|stem|12e5e52906d78c57|714d0a4ca5969453|8a59d763c9a614d1|-1573168556||t19236.5652821112s|e46387a1fdfef39a|136662|rds|local|vector|||13.767|attribute variables are assumed to be spatially constant throughout all geometries|
+hexgrid_res_09|stem|3c6108b8e293863c|126ca3758125d62b|8a59d763c9a614d1|1402420497||t19236.5663526377s|54a723a5edb16431|955029|rds|local|vector|||92.317|attribute variables are assumed to be spatially constant throughout all geometries|
+hexgrid_res_10|stem|9dccb9d827896d1c|6e96329e81a8132a|8a59d763c9a614d1|955620746||t19236.5651216919s|3517da750235546c|7888376|rds|local|vector|||817.148|attribute variables are assumed to be spatially constant throughout all geometries|
+hexgrid_students|stem|73bb9c8fb4aacaf9|1a718e0438b51838|191b812d588bc36c|2045375246||t19236.5666333829s|20f996adf2cd36bf|5055524|rds|local|vector|||15.209||
+hexgrid_students_future|stem|6214a5897f98b640|67085a6bbb55ca81|64dff959a8fa22d1|1461720655||t19236.6426996051s|14792d0dae8ec6f6|35758659|rds|local|vector|||32.052||
+hexgrid_students_future_census|stem|fa414575f26f5f5e|64f4db57268ea5a5|908f714f91e1c08a|-1240247023||t19237.0808032571s|a1c456b03adbfbf8|44|rds|local|vector|||0||
+hexgrid_students_future_seade|stem|6214a5897f98b640|d43504848a803ff5|70f3e598a24fc765|2103224100||t19237.0231798797s|14792d0dae8ec6f6|35758659|rds|local|vector|||29.949||
+load_enrollments_from_census|function|bba8a1d1e6c12fbe|||||||||||||||
 load_pop_growth_estimates|function|a70b3aa126f5f89b|||||||||||||||
 load_pop_growth_estimates_by_district|function|80159e6298132ed9|||||||||||||||
+load_pop_growth_estimates_by_district_seade|function|80159e6298132ed9|||||||||||||||
 load_rooms|function|5a7314790e5b88a2|||||||||||||||
 load_schools|function|1f95d2b8c75eda0d|||||||||||||||
 load_schools_census|function|c35ee8848733e198|||||||||||||||
@@ -85,8 +98,12 @@ plot_fixed_rooms|stem|27a5f6bc8c7df15f|24dcbfe993cd92c3|8d69ec409c18b5ee|1359393
 plot_fixed_rooms_histogram|stem|7de10702e1fe7441|f0b317147006a6a1|a422755a129d94a5|965458043|output/report_03/fig_xx_fixed_rooms_histogram.png|t19233.8174464541s|c3422df6df761175|53669|file|local|vector|||0.345||
 plot_problematic_rooms|stem|0f3df69a0d7bd3f4|2b441262a6a2cc40|7fae35724e58eb97|1047033853|output/report_03/fig_xx_problematic_rooms.png|t19233.8168964406s|2119561c853477c7|84147|file|local|vector|||0.646|Removed 3107 rows containing missing values geom_point.|
 pop_growth_estimates|stem|b8b6d5974aefe0ad|64884932d2f8d89b|f7a99ec11dc44a12|249908447||t19236.010125782s|dee99202b1a245e6|162411|rds|local|vector|||0.172||
+pop_growth_estimates_census|stem|a927e55c154a2da4|8d0f789bd6d0b57f|e96984aaa9d5a934|1296268322||t19237.0807809882s|f2a6b7626a2b7bbf|4133|rds|local|vector|||0.214||
 pop_growth_estimates_raw_file|stem|768329816eafcec4|15135ae496d0b7f7|ef46db3751d8e999|-445147044||t19235.9202326455s|82334e57b39f02e1|127|rds|local|vector|||0||
-r5_folder|stem|c55998e7a484261a|96d746f98b9fbd57|ef46db3751d8e999|1857406740||t19233.8082574842s|93a4d4dc4116d568|64|rds|local|vector|||0||
+pop_growth_estimates_seade|stem|b8b6d5974aefe0ad|fc662283f5c663ec|f2bc9b78da7f4c87|-695575432||t19237.0198249936s|dee99202b1a245e6|162411|rds|local|vector|||0.137||
+prepare_growthrates_for_estimation|function|559d01349bf9fcdc|||||||||||||||
+prepare_hexgrid_for_estimation|function|180952d66768dafe|||||||||||||||
+r5_folder|stem|4d0b3d3d6fd43bf6|96d746f98b9fbd57|ef46db3751d8e999|1857406740|../network/|t19211.9608585727s|a75e104011428481|4096|file|local|vector|||0.001||
 read_topography|function|328b43a8225f8ea1|||||||||||||||
 recode_students_data|function|d37d21d2329d97fb|||||||||||||||
 rooms_fixed|stem|aea45d53cfc465a3|9705c2ad3cd01928|6355491557f9a889|-199055636||t19233.8168995425s|f33393a3be297232|440688|rds|local|vector|||0.103||
@@ -95,7 +112,8 @@ rooms_raw_file|stem|fb821796bc10c7ec|b775f16d43472e9a|ef46db3751d8e999|-12594527
 schools_census|stem|5bfb0f3f8a20e722|d9d928d02aec0e8d|e34ad8b37fd2e3a7|-1824990223||t19234.7826637181s|d4e987fa4384df7c|77781|rds|local|vector|||2.699||
 schools_census_geo_file|stem|556395baf18b8a45|2c5f04116e3b6550|ef46db3751d8e999|749822492|../data_raw/schools_sp_geo2.csv|t19157.9659953704s|e68c7067397eaf9c|1606977|file|local|vector|||0.001||
 schools_census_raw|stem|bf9eb69d30f6a0e9|2d64060cd2ba7e87|0b0be6e0ed95a7b0|-1235969174||t19233.809590977s|9196399d493b1ac4|169291|rds|local|vector|||1.568||
-schools_census_raw_file|stem|efc992c88b749ff4|f147aa5dc777e2f7|ef46db3751d8e999|1159012877|../data_raw/microdados_ed_basica_2021.csv|t19157.7287384259s|e6ff0e071e18198f|185911675|file|local|vector|||0||
+schools_census_raw_file|stem|efc992c88b749ff4|54191cf98e1bb04b|ef46db3751d8e999|1159012877|../data_raw/censo_escolar/microdados_ed_basica_2021.csv|t19157.7287384259s|e6ff0e071e18198f|185911675|file|local|vector|||0.001||
+schools_census_raw_folder|stem|90d9bd0399d6f31f|b402df09e7d7ce40|ef46db3751d8e999|-1818129360||t19236.7715576467s|8619def19bb20a44|79|rds|local|vector|||0.001||
 schools_enrollments|stem|9cc17a93e6d11635|e9724c783abc3521|baee0736076262ab|411119604||t19235.7170567236s|5d2c0d8006e8eb79|310184|rds|local|vector|||0.348||
 schools_geo|stem|4c24db6a6691e807|7d6b6b120526e299|00699ba80d47c64c|1172981266||t19235.6909730744s|bcdb2c14bf86f3c4|562081|rds|local|vector|||0.291||
 schools_raw|stem|f1f7d19ad47828c1|75dd6703a077f6ff|4d61523d3ff2bd40|-695511216||t19233.8091261087s|46be436c17333477|506930|rds|local|vector|||0.139||
@@ -107,6 +125,7 @@ sme_regions_url|stem|29cc77a713391a49|c55fa6bb3f7f4647|ef46db3751d8e999|30315337
 sp_bbox|stem|bd04af82a21244a4|00cb54d73805c7fe|1a4732e71694de9e|-1258496699||t19233.8095917177s|85d1e02283cfd189|523|rds|local|vector|||0.062||
 sp_centroid|stem|078cd41d0f38963e|17b049bf35fb4162|d5952a468c1d9178|898362752||t19233.8086880927s|b2c2d69496a0fbf4|63|rds|local|vector|||0||
 stat_mode|function|1794c75c71466dbf|||||||||||||||
+state_enrollments_raw_file|stem|0b40cf04875db9f8|fd3ce12038b81e94|ef46db3751d8e999|12156568||t19237.5076325675s|6750e7a20a1b121a|109|rds|local|vector|||0.001||
 state_schools|stem|dd76d9fdb4cfd508|cc287be61e795a2c|f9f0f5c4318a5915|-1666794924||t19234.814995421s|d3e85933a75349a3|89248|rds|local|vector|||3.066||
 students_geo|stem|80dd743c96546bbf|39b02e19db704560|bcc47b9de7fe6000|409934088||t19233.8189901941s|2ff0430e879874e0|49759031|rds|local|vector|||118.48||
 students_geo_file|stem|5860865e5cdee4bd|69e5c103d9d27b71|ef46db3751d8e999|-862657164|../data_raw/BID_ALUNOS_COORDENADA_2022.csv|t19198.7110951592s|0f4ed28bcc956ece|32889565|file|local|vector|||0||
@@ -122,6 +141,6 @@ table_student_count|stem|b71472af97838d3a|9fc11a3f61e39751|84fd07b4541b5ddb|-451
 table_students_by_income|stem|e15a6dcfaa558fe1|2289d2beb91a9da6|36d50e8168bf6a54|77826132|output/report_02/tab_04_students_by_income.xlsx|t19233.8195394194s|13008f42c19a9c7c|5415|file|local|vector|||0.056||
 table_students_by_race|stem|e182f78b4df874f0|e851420e6ada2aa0|52d31ad9ed4ab4b1|-24769536|output/report_02/tab_03_students_by_race.xlsx|t19233.819538725s|48e0064ba71f7b88|5260|file|local|vector|||0.026||
 table_students_by_stage|stem|0cae50bea53f6fe6|50719b1b8ee4c853|0152d34c6cddb41c|-379944902|output/report_02/tab_02_students_by_stage.xlsx|t19233.8196594684s|f89be33262a7c204|5608|file|local|vector|||0.56||
-topography|stem|1bf85d2126c1c741|a9be3ce16d6bb80f|d08dc15fd6cbf3d1|1102653047||t19233.8087193432s|dc091c3b3c92455c|5369406|rds|local|vector|||0.864||
-travel_times_r10|stem|7b2b47392107a985|de579423c1303d25|46a0915d8c40eccf|769393621||t19235.9124100151s|9aa83c718ce03ecb|196113191|rds|local|vector|||345.682||
+topography|stem|1bf85d2126c1c741|a9be3ce16d6bb80f|4cee3646a6414197|1102653047||t19236.7715938971s|dc091c3b3c92455c|5369406|rds|local|vector|||1.315||
+travel_times_r10|stem|7b2b47392107a985|de579423c1303d25|89ada8472afb2c25|769393621||t19236.7769133107s|9aa83c718ce03ecb|196113191|rds|local|vector|||392.457||
 unitary_access_r10|stem|132378b8824c79a0|0135f2c3e8921be0|28875845936173c3|-1883433311||t19235.9127695584s|0404cc306ef89511|480830|rds|local|vector|||2.531||

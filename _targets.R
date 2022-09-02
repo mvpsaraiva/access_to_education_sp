@@ -65,12 +65,14 @@ list(
   tar_target(students_geo_file, "../data_raw/BID_ALUNOS_COORDENADA_2022.csv", format = "file"),
   tar_target(students_socio_file, "../data_raw/BID_INFORMACOES_SOCIOECONOMICAS_2022.csv", format = "file"),
   tar_target(schools_raw_file, "../data_raw/BID_CADASTRO_ESCOLA_2022.csv", format = "file"),
-  tar_target(schools_census_raw_file, "../data_raw/microdados_ed_basica_2021.csv", format = "file"),
+  tar_target(schools_census_raw_folder, "../data_raw/censo_escolar/"),
+  tar_target(schools_census_raw_file, "../data_raw/censo_escolar/microdados_ed_basica_2021.csv", format = "file"),
   tar_target(schools_census_geo_file, "../data_raw/schools_sp_geo2.csv", format = "file"),
   tar_target(rooms_raw_file, "../data_raw/BID_AMBIENTE_METRAGEM_2022.csv", format = "file"),
+  tar_target(state_enrollments_raw_file, "../data_raw/dados_estaduais/Matriculas_por_aluno_2021.csv"),
   tar_target(pop_growth_estimates_raw_file, "../data_raw/estimativas_populacionais_seade/pop_idade_escolar_2000a2050_msp.csv"),
-  tar_target(dem_file, "../network/bkp/topografia3_spo.tif"),
-  tar_target(r5_folder, "../network/"),
+  tar_target(dem_file, "../network/bkp/topografia3_spo.tif", format = "file"),
+  tar_target(r5_folder, "../network/", format = "file"),
   
   ### geographical boundaries and topography ---------
   tar_target(sp_centroid, c(-46.63306176720343, -23.548164364465265)),
@@ -120,8 +122,14 @@ list(
   tar_target(hexgrid_students, add_students_to_grid(hexgrid_res_10, students_processed)),
   tar_target(hexgrid_enrollments, add_enrollments_to_grid(hexgrid_res_10, schools_enrollments)),
   
-  ### population growth estimates by SEADE
-  tar_target(pop_growth_estimates, load_pop_growth_estimates_by_district(pop_growth_estimates_raw_file)),
+  ### population growth estimates by SEADE ---------
+  tar_target(pop_growth_estimates_seade, load_pop_growth_estimates_by_district_seade(pop_growth_estimates_raw_file)),
+  tar_target(hexgrid_students_future_seade, estimate_future_population_seade(hexgrid_students, pop_growth_estimates_seade)),
+
+  ### population growth estimates from School Census ---------
+  tar_target(enrollments_by_year, load_enrollments_from_census(schools_census_raw_folder, sme_districts)),
+  tar_target(pop_growth_estimates_census, estimate_growth_by_district_census(enrollments_by_year)),
+  tar_target(hexgrid_students_future_census, estimate_future_population_census(hexgrid_students, pop_growth_estimates_census)),
   
   ## Report 02 targets ----------------------------------------------------
 
@@ -160,7 +168,8 @@ list(
   tar_target(figure_fixed_rooms_histogram, create_plot_fixed_rooms_histogram(rooms_fixed), format = "file"),
   
   tar_target(figure_state_schools, create_map_state_schools(state_schools, boundary_muni, hexgrid_res_08), format = "file"),
-  tar_target(figure_pop_growth, create_map_pop_growth(sme_districts, pop_growth_estimates, boundary_muni), format = "file")
+  tar_target(figure_pop_growth, create_map_pop_growth(sme_districts, pop_growth_estimates_seade, boundary_muni), format = "file"),
+  tar_target(figure_pop_growth_estimates, create_map_pop_growth_estimates(hexgrid_students_future_seade, boundary_muni, hexgrid_res_08), format = "file")
 
 )
 
