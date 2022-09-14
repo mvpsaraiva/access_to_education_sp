@@ -1,10 +1,10 @@
 
-# Escolas Estaduais -------------------------------------------------------
+# Escolas Estaduais - Censo Escolar -------------------------------------------------------
 
 
 # raw_file <- tar_read(schools_census_raw_file)
 # geo_file <- tar_read(schools_census_geo_file)
-load_state_schools <- function(raw_file, geo_file) {
+load_state_schools_census <- function(raw_file, geo_file) {
   
   # ler dados do censo escolar
   escolas_df <- fread(raw_file, sep = ";", encoding = "Latin-1")
@@ -60,6 +60,181 @@ load_state_schools <- function(raw_file, geo_file) {
   escolas_df <- janitor::clean_names(escolas_df)
   
   return(escolas_df)
+}
+
+
+# Escolas e Matrículas Estaduais - Secretaria Estadual de Educação ---------------------
+
+# raw_file <- tar_read(state_schools_geo_file)
+load_state_schools <- function(raw_file) {
+  
+  # carregar dados brutos das escolas
+  schools_df <- fread(raw_file)
+  
+  # filtrar apenas escolas estaduais (EE) localizadas no município de São Paulo
+  # o filtro EE remove escolas localizadas em hospitais e penitenciárias, entre outras
+  # schools_df[MUN == "SAO PAULO"] |> count(TIPOESC)
+  
+  schools_filtered_df <- schools_df[MUN == "SAO PAULO" & 
+                                      TIPOESC %in% c("EE",
+                                                     "ÁREA DE ASSENTAMENTO",
+                                                     "QUILOMBO")]
+  
+  schools_filtered_df <- schools_filtered_df[!(COD_ESC %in% c(1569, 3542, 4911))]
+  
+  # converter coordenadas geográficas para tipo numérico
+  schools_filtered_df[, DS_LONGITUDE := str_replace(DS_LONGITUDE, ",", ".")]
+  schools_filtered_df[, lon := as.double(DS_LONGITUDE)]
+  schools_filtered_df[, DS_LONGITUDE := NULL]
+  
+  schools_filtered_df[, DS_LATITUDE := str_replace(DS_LATITUDE, ",", ".")]
+  schools_filtered_df[, lat := as.double(DS_LATITUDE)]
+  schools_filtered_df[, DS_LATITUDE := NULL]
+  
+  
+  # encontrar hexágono H3 de cada escola
+  escolas_sf <- schools_filtered_df |> 
+    select(COD_ESC, lat, lon) |> 
+    st_as_sf(coords = c("lon", "lat"), crs = 4326)
+  
+  # encontrar hexágonos H3 de cada aluno
+  hex_res10 <- h3jsr::point_to_h3(escolas_sf, res = 10)
+  
+  # atribuir hex id a cada aluno
+  schools_filtered_df$id_hex_10 <- hex_res10
+
+  # renomear colunas
+  schools_filtered_df <- janitor::clean_names(schools_filtered_df)
+  
+  return(schools_filtered_df)
+}
+
+
+# raw_file <- tar_read(state_enrollments_raw_file)
+# schools <- tar_read(state_schools_geo)
+load_state_students <- function(raw_file, schools) {
+  # carregar dados brutos dos alunos
+  students_df <- fread(raw_file)
+  
+  # corrigir escritas erradas do nome São Paulo
+  students_df$CIDADE <- str_to_upper(students_df$CIDADE)
+  students_df$CIDADE <- str_squish(students_df$CIDADE)
+  
+  spellings <- c(
+    "SAO PAULO",
+    "S PAULO",
+    "SAO PAULOP",
+    "SAO PAULOB",
+    "SÃO PAULO - SP",
+    "SAOP PAULO",
+    "SAOPAULO",
+    "SAO PAUCO",
+    "SEO PAULO",
+    "SAO PAOLO",
+    "SAO PAULO S",
+    "SAO PUALO",
+    "SAO PAAULO",
+    "SÃO PAULO SP",
+    "SAO PAUKLO",
+    "SAO PAUL O",
+    "SA PAULO"  ,
+    "SAO PAUL"    ,
+    "SAO PAUALO"  ,
+    "SAO PAUILO"  ,
+    "SAO PAULO SP" ,
+    "SÃOPAULO"   ,
+    "SHO PAULO"   ,
+    "SAO PALO",
+    "SÃ0 PAULO",
+    "SAO PRULO" ,
+    "SAO PAULO - SP"    ,
+    "SAO PAIULO" ,
+    "SAO PAUULO"  ,
+    "SÃO PULO" ,
+    "SUO PAULO" ,
+    "SÃO PAULO"  ,
+    "SP" ,
+    "SAO APULO",
+    "SOA PAULO",
+    "SÃO PAULO -SP"   ,
+    "SXO PAULO"  ,
+    "SAO PAILO"   ,
+    "SPAULO" ,
+    "SAO PAULO-SP" ,
+    "SAO PAULOS",
+    "SAO PAUO"  ,
+    "S APULO" ,
+    "SAO PAULA",
+    "SAO PÁULO",
+    "SAPO PAULO",
+    "S.PAULO",
+    "S. PAULO",
+    "SAO PAUOO",
+    "SAO APAULO",
+    "SÇAO PAULO",
+    "SÂO PAULO",
+    "SAO PALUO" ,
+    "SAP PAULO"  ,
+    "SÃO PAULO - SPP" ,
+    "S P"  ,
+    "SZO PAULO"   ,
+    "SAO AULO",
+    "SÃO PAULO / SP" ,
+    "SAO PAULO PAULO" ,
+    "SASO PAULO"    ,
+    "SAO PPAULO"   ,
+    "SRO PAULO"    ,
+    "SAO PAULOO"  ,
+    "SÃO PAULO/SP" ,
+    "SAO PLUO"    ,
+    "SÃO APULO"   ,
+    "SKO PAULO",
+    "SÃO PAULOA",
+    "S SÃO PAULO",
+    "SAO PAULO CAPITAL"   ,
+    "SSAO PAULO"   ,
+    "SAOA PAULO"
+  )    
+  
+  students_df[CIDADE %in% spellings, CIDADE := "SAO PAULO"]
+  
+  # corrigir escritas erradas da sigla SP
+  students_df$SIGLA_END_UF <- str_to_upper(students_df$SIGLA_END_UF)
+  
+  # filtrar estudantes de 1o grau (ensino fundamental)
+  # estudantes com matrícula regular ativa (FLAG_SIT_ALUNO == 0)
+  # residentes na cidade de São Paulo / SP
+  # matriculados em escolas estaduais localizadas no município de São Paulo
+  students_filtered_df <- students_df[GRAU == 14 & 
+                                        SERIE > 0 &
+                                        FLAG_SIT_ALUNO == 0 &
+                                        CIDADE == "SAO PAULO" &
+                                        SIGLA_END_UF == "SP" &
+                                        CD_ESCOLA %in% schools$cod_esc]
+  
+  
+  # renomear colunas
+  students_filtered_df <- janitor::clean_names(students_filtered_df)
+  
+  return(students_filtered_df)
+}
+
+# tar_load(state_schools_geo)
+# tar_load(state_students_raw)
+add_state_enrollments_to_schools <- function(state_schools_geo, state_students_raw) {
+  
+  students_by_school <- state_students_raw |> 
+    count(cd_escola, grau, serie, name = "n_alunos") |> 
+    mutate(sg_etapa = "FUNDAMENTAL", 
+           sg_serie_ensino = paste0(serie, "º ANO")) |> 
+    select(cd_escola, sg_etapa, sg_serie_ensino, n_alunos)
+  
+
+  schools_fill <- state_schools_geo |> 
+    left_join(students_by_school, by = c("cod_esc" = "cd_escola"), fill = 0)
+
+  return(schools_fill)
+  
 }
 
 
@@ -258,6 +433,7 @@ prepare_growthrates_for_estimation <- function(growth_rates) {
   
   return(growth_rates)
 }
+
 
 
 # Estimativas de Crescimento Populacional - Censo Escolar -----------------
@@ -494,3 +670,8 @@ estimate_future_population_census <- function(hexgrid_students, pop_growth_estim
 # #   scale_x_continuous(breaks = 2007:2021, labels = 7:21) +
 # #   facet_wrap(~etapa_ensino, scales = "free")
 # 
+
+# state_schools_geo |>
+#   mapview::mapview(xcol = "lon", ycol = "lat", crs=4326)
+
+

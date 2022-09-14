@@ -12,6 +12,14 @@ get_boundary_rmsp <- function() {
   return(boundary_rmsp_sf)
 }
 
+# central_neighborhoods_file <- tar_read(central_neighborhoods_file)
+load_central_neighborhoods <- function(central_neighborhoods_file) {
+  data_sf <- st_read(central_neighborhoods_file) |> 
+    st_transform(crs = 4326)
+  
+  return(data_sf)
+}
+
 get_census_tracts <- function() {
   ## IBGE code of São Paulo municipality: 3550308
   census_tracts_sf <- read_census_tract(code_tract = 3550308, simplified = FALSE) |> 

@@ -31,6 +31,7 @@ suppressPackageStartupMessages({
   library(viridis)
   library(ggsci)
   library(r5r)
+  library(accessibility)
 })
 
 # Set target options:
@@ -64,12 +65,18 @@ list(
   tar_target(students_raw_file, "../data_raw/BID_RELACAO_ALUNOS_2022.csv", format = "file"),
   tar_target(students_geo_file, "../data_raw/BID_ALUNOS_COORDENADA_2022.csv", format = "file"),
   tar_target(students_socio_file, "../data_raw/BID_INFORMACOES_SOCIOECONOMICAS_2022.csv", format = "file"),
+  
   tar_target(schools_raw_file, "../data_raw/BID_CADASTRO_ESCOLA_2022.csv", format = "file"),
+  
   tar_target(schools_census_raw_folder, "../data_raw/censo_escolar/"),
   tar_target(schools_census_raw_file, "../data_raw/censo_escolar/microdados_ed_basica_2021.csv", format = "file"),
   tar_target(schools_census_geo_file, "../data_raw/schools_sp_geo2.csv", format = "file"),
+  
   tar_target(rooms_raw_file, "../data_raw/BID_AMBIENTE_METRAGEM_2022.csv", format = "file"),
+  
+  tar_target(state_schools_geo_file, "../data_raw/dados_estaduais/Endereço Escolas.csv"),
   tar_target(state_enrollments_raw_file, "../data_raw/dados_estaduais/Matriculas_por_aluno_2021.csv"),
+  
   tar_target(pop_growth_estimates_raw_file, "../data_raw/estimativas_populacionais_seade/pop_idade_escolar_2000a2050_msp.csv"),
   tar_target(dem_file, "../network/bkp/topografia3_spo.tif", format = "file"),
   tar_target(r5_folder, "../network/", format = "file"),
@@ -80,10 +87,14 @@ list(
   tar_target(boundary_muni, get_boundary_muni()),
   tar_target(boundary_rmsp, get_boundary_rmsp()),
   tar_target(census_tracts, get_census_tracts()),
+
+  tar_target(central_neighborhoods_file, "../data_raw/bairros/bairros_centro_2.gpkg", format = "file"),
   
   tar_target(districts_by_dre_table, build_districts_by_dre_table(schools_geo)),
   tar_target(sme_districts, build_districts(census_tracts, districts_by_dre_table)),
   tar_target(sme_regions, build_regions(sme_districts)),
+  
+  tar_target(central_neighborhoods, load_central_neighborhoods(central_neighborhoods_file)),
 
   tar_target(topography, read_topography(dem_file)),
   
@@ -97,10 +108,9 @@ list(
   # tar_target(travel_times_r09, compute_travel_times(r5_folder, hexgrid_res_09)),
   # tar_target(travel_times_r08, compute_travel_times(r5_folder, hexgrid_res_08)),
 
-  ### unitary accessibility
+  ### unitary and tmi accessibility
   tar_target(unitary_access_r10, calculate_unitary_access(travel_times_r10)),
-  # tar_target(unitary_access_r09, calculate_unitary_access(travel_times_r09)),
-  # tar_target(unitary_access_r08, calculate_unitary_access(travel_times_r08)),
+  tar_target(tmi_r10, calculate_tmi(travel_times_r10, schools_geo)),
 
   ### process students data ---------
   tar_target(students_raw, load_students_base_data(students_raw_file)),
@@ -108,12 +118,19 @@ list(
   tar_target(students_geo, load_students_geo_data(students_socio, students_geo_file, boundary_rmsp)),
   tar_target(students_processed, recode_students_data(students_geo)),
   
+  tar_target(students_flows, build_student_flows_with_times(students_processed, schools_geo, travel_times_r10)),
+  tar_target(flows_per_district, build_student_flows_per_district(students_flows, hexgrid_res_10)),
+  
   ### process schools and rooms data ---------
   tar_target(schools_raw, load_schools(schools_raw_file)),
   tar_target(schools_geo, add_h3_to_schools(schools_raw)),
   tar_target(schools_enrollments, add_enrollments_to_schools(schools_geo, students_processed)),
-  
-  tar_target(state_schools, load_state_schools(schools_census_raw_file, schools_census_geo_file)),
+
+  ### process state schools and students ---------
+  tar_target(state_schools_geo, load_state_schools(state_schools_geo_file)),
+  tar_target(state_students_raw, load_state_students(state_enrollments_raw_file, state_schools_geo)),
+  # tar_target(state_students_geo, load_state_students_geo_data(state_students_raw)),
+  tar_target(state_schools_enrollments, add_state_enrollments_to_schools(state_schools_geo, state_students_raw)),
   
   tar_target(rooms_geo, load_rooms(rooms_raw_file)),
   tar_target(rooms_fixed, fix_room_capacity(rooms_geo)),
@@ -162,14 +179,18 @@ list(
   
   ## Report 03 targets ----------------------------------------------------
   tar_target(figure_unitary_access, create_map_unitary_access(unitary_access_r10, hexgrid_res_10), format = "file"),
+  tar_target(figure_travel_times, create_map_travel_times(unitary_access_r10, tmi_r10, hexgrid_res_10, boundary_muni), format = "file"),
   tar_target(figure_regions_districts, create_map_regions_districts(sme_districts), format = "file"),
   tar_target(figure_problematic_rooms, create_plot_problematic_rooms(rooms_geo), format = "file"),
   tar_target(figure_fixed_rooms, create_plot_fixed_rooms(rooms_fixed), format = "file"),
   tar_target(figure_fixed_rooms_histogram, create_plot_fixed_rooms_histogram(rooms_fixed), format = "file"),
   
-  tar_target(figure_state_schools, create_map_state_schools(state_schools, boundary_muni, hexgrid_res_08), format = "file"),
+  tar_target(figure_state_schools, create_map_state_schools(state_schools_enrollments, boundary_muni, hexgrid_res_08), format = "file"),
   tar_target(figure_pop_growth, create_map_pop_growth(sme_districts, pop_growth_estimates_seade, boundary_muni), format = "file"),
-  tar_target(figure_pop_growth_estimates, create_map_pop_growth_estimates(hexgrid_students_future_seade, boundary_muni, hexgrid_res_08), format = "file")
+  tar_target(figure_pop_growth_estimates, create_map_pop_growth_estimates(hexgrid_students_future_seade, boundary_muni, hexgrid_res_08), format = "file"),
+  tar_target(figure_central_neighborhoods, create_map_central_neighborhoods(central_neighborhoods), format = "file"),
+  
+  tar_target(table_state_enrollments, create_table_state_enrollments(state_schools_enrollments), format = "file")
 
 )
 

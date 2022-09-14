@@ -44,6 +44,49 @@ create_map_unitary_access <- function(access, hexgrid) {
   
 }
 
+# unitary_access <- tar_read(unitary_access_r10)
+# tmi <- tar_read(tmi_r10)
+# hexgrid <- tar_read(hexgrid_res_10)
+# boundary <- tar_read(boundary_muni)
+create_map_travel_times <- function(unitary_access, tmi, hexgrid, boundary) {
+  
+  access_sf <- inner_join(hexgrid, unitary_access, by = c("h3_address" = "id"))
+  
+  p1 <- access_sf |> 
+    ggplot(aes(fill = accessibility)) +
+    annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+    geom_sf(color = NA) +
+    geom_sf(data = boundary, fill = NA, color = "grey40", size = 0.5) +
+    scale_fill_viridis() +
+    coord_sf(datum = NA) +
+    annotation_scale(style = "ticks", location = "br") +
+    theme_minimal() +
+    labs(fill = "Área\nacessível")
+  
+  tmi_sf <- inner_join(hexgrid, tmi, by = c("h3_address" = "id")) |> 
+    filter(travel_time <= 15)
+  
+  p2 <- tmi_sf |> 
+    ggplot(aes(fill = travel_time)) +
+    annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+    geom_sf(color = NA) +
+    geom_sf(data = boundary, fill = NA, color = "grey40", size = 0.5) +
+    scale_fill_viridis(direction = -1) +
+    coord_sf(datum = NA) +
+    annotation_scale(style = "ticks", location = "br") +
+    theme_minimal() +
+    labs(fill = "Tempo de\nviagem")
+  
+  pc <- p1 + p2 + plot_annotation(tag_levels = "A")
+   
+  figure_path <- "output/report_03/fig_xx_travel_times.png"
+  ggsave(plot = pc, filename = figure_path,
+         width = 16, height = 9, units = "cm", dpi = 300, scale = 1.2)
+  
+  return(figure_path)
+  
+}
+
 # rooms_geo <- tar_read(rooms_geo)
 create_plot_problematic_rooms <- function(rooms_geo) {
   
@@ -118,27 +161,22 @@ create_plot_fixed_rooms_histogram <- function(rooms_fixed) {
   return(figure_path)
 }
 
-# state_schools <- tar_read(state_schools)
+# state_schools <- tar_read(state_schools_enrollments)
 # hexgrid_res_08 <- tar_read(hexgrid_res_08)
 # boundary <- tar_read(boundary_muni)
 create_map_state_schools <- function(state_schools, boundary, hexgrid_res_08) {
   
   # Schools
   schools_sf <- state_schools |> 
-    select(co_entidade, in_inf, in_fund, lat, lon) |> 
-    pivot_longer(cols = in_inf:in_fund, names_to = "nivel_ensino", values_to = "presente") |> 
-    filter(presente == 1) |> 
+    select(cod_esc, sg_etapa, lat, lon) |> 
+    distinct() |> 
     mutate(presente = "Escolas") |> 
     st_as_sf(coords = c("lon", "lat"), crs = 4326)
-  
-  schools_sf$nivel_ensino <- factor(schools_sf$nivel_ensino,
-                                    levels = c("in_inf", "in_fund"),
-                                    labels = c("Infantil", "Fundamental"))
   
   p_schools <- schools_sf |>
     ggplot() +
     annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
-    geom_sf(aes(color = nivel_ensino), size = 0.5) +
+    geom_sf(size = 0.5, color = "steelblue4") +
     geom_sf(data = boundary, fill = NA, color = "grey40") +
     annotation_scale(style = "ticks", location = "br") +
     coord_sf(datum = NA) +
@@ -149,16 +187,25 @@ create_map_state_schools <- function(state_schools, boundary, hexgrid_res_08) {
     facet_wrap(~presente)
 
   # Enrollments
+  
+  state_schools[, serie := as.numeric(str_sub(sg_serie_ensino, 1, 1)) ]
+  state_schools[, etapa := ifelse(serie <= 5, 
+                                  "Matrículas: Anos Iniciais",
+                                  "Matrículas: Anos Finais")]
+  
+  state_schools$etapa <- factor(state_schools$etapa,
+                                levels = c("Matrículas: Anos Iniciais",
+                                           "Matrículas: Anos Finais"))
+  
+  id_hex_08 <- h3jsr::get_parent(state_schools$id_hex_10, res = 8)
+  state_schools$id_hex_08 <- id_hex_08
+  
+  
   enrollments_by_hex <- state_schools |> 
-    group_by(id_hex_08) |> 
-    summarise(across(.cols = qt_mat_fund_ai:qt_mat_fund_af, sum)) |> 
-    pivot_longer(cols = qt_mat_fund_ai:qt_mat_fund_af, 
-                 names_to = "nivel_ensino", values_to = "matriculas")
-  
-  enrollments_by_hex$nivel_ensino <- factor(enrollments_by_hex$nivel_ensino,
-                                            levels = c("qt_mat_fund_ai", "qt_mat_fund_af"),
-                                            labels = c("Matrículas: Anos Iniciais", "Matrículas: Anos Finais"))
-  
+    drop_na() |> 
+    group_by(id_hex_08, etapa) |>
+    summarise(matriculas = sum(n_alunos, na.rm = TRUE), .groups = "drop")
+    
   p_enrollments <-
     hexgrid_res_08 |> 
     left_join(enrollments_by_hex, by = c("h3_address" = "id_hex_08")) |> 
@@ -174,7 +221,7 @@ create_map_state_schools <- function(state_schools, boundary, hexgrid_res_08) {
     theme_minimal() +
     theme(legend.position = "bottom") +
     labs(fill = "Número de\nMatrículas") +
-    facet_wrap(~nivel_ensino)  
+    facet_wrap(~etapa)  
   
   # combine plots
   p_combined <- p_schools + p_enrollments +
@@ -182,50 +229,23 @@ create_map_state_schools <- function(state_schools, boundary, hexgrid_res_08) {
   
   
   # save figure
-  figure_path <- "output/report_03/fig_xx_state_schools.png"
+  figure_path <- "output/report_03/fig_xx_state_schools_b.png"
   ggsave(plot = p_combined, filename = figure_path,
          width = 16, height = 11, units = "cm", dpi = 300, scale = 1.2)
   
   return(figure_path)
 }
 
-# state_schools <- tar_read(state_schools)
-# hexgrid_res_08 <- tar_read(hexgrid_res_08)
-# boundary <- tar_read(boundary_muni)
-create_map_state_enrollments <- function(state_schools, boundary, hexgrid_res_08) {
-  
-  enrollments_by_hex <- state_schools |> 
-    group_by(id_hex_08) |> 
-    summarise(across(.cols = qt_mat_fund_ai:qt_mat_fund_af, sum)) |> 
-    pivot_longer(cols = qt_mat_fund_ai:qt_mat_fund_af, 
-                 names_to = "nivel_ensino", values_to = "matriculas")
-  
-  enrollments_by_hex$nivel_ensino <- factor(enrollments_by_hex$nivel_ensino,
-                                            levels = c("qt_mat_fund_ai", "qt_mat_fund_af"),
-                                            labels = c("Anos Iniciais", "Anos Finais"))
+create_table_state_enrollments <- function(state_schools_enrollments) {
 
-  p <-
-    hexgrid_res_08 |> 
-    left_join(enrollments_by_hex, by = c("h3_address" = "id_hex_08")) |> 
+  total_df <- state_schools_enrollments |> 
     drop_na() |> 
-    ggplot() +
-    annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
-    geom_sf(aes(fill = matriculas), color = NA) +
-    geom_sf(data = boundary, fill = NA, color = "grey40") +
-    annotation_scale(style = "ticks", location = "br") +
-    coord_sf(datum = NA) +
-    scale_fill_distiller(palette = "YlOrRd", direction = 1, na.value = "transparent",
-                         limits = c(0, 2500)) +
-    theme_minimal() +
-    labs(fill = "Número de\nMatrículas") +
-    facet_wrap(~nivel_ensino)
-    
-  figure_path <- "output/report_03/fig_xx_state_enrollments.png"
-  ggsave(plot = p, filename = figure_path,
-         width = 16, height = 9, units = "cm", dpi = 300, scale = 1.2)
+    count(sg_etapa, sg_serie_ensino, wt = n_alunos)
   
-  return(figure_path)
+  table_path <- "output/report_03/tab_02_number_of_state_students.xlsx"
+  write_xlsx(total_df, table_path)
   
+  return(table_path)
 }
 
 
@@ -330,6 +350,26 @@ create_map_pop_growth_estimates <- function(hexgrid_students_future, boundary, h
   
 }
   
+# central_neighborhoods <- tar_read(central_neighborhoods)
+create_map_central_neighborhoods <- function(central_neighborhoods) {
+  
+  p <- central_neighborhoods |> 
+    ggplot() +
+    annotation_map_tile(type = "cartolight", zoom = 14, progress = "none") +
+    geom_sf(aes(color = borough)) +
+    annotation_scale(style = "ticks", location = "br") +
+    coord_sf(datum = NA) +
+    theme_minimal() +
+    labs(color = "Bairros")
+  
+  figure_path <- "output/report_03/fig_xx_central_neighborhoods.png"
+  ggsave(plot = p, filename = figure_path,
+         width = 16, height = 9, units = "cm", dpi = 300, scale = 1.2)
+  
+  return(figure_path)
+  
+  
+}
 # state_schools$co_distrito |> unique() |> sort()
 
 # rooms_fixed |>
@@ -400,3 +440,4 @@ create_map_pop_growth_estimates <- function(hexgrid_students_future, boundary, h
 # rooms_step4 |>
 #   select(qt_area_util, qt_real_pessoa) |>
 #   summary()
+
